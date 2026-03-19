@@ -4,7 +4,11 @@ export default async (req) => {
   const store = getStore("guestbook", { consistency: "strong" });
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-  const { name, message, websiteName, websiteUrl } = await req.json();
+  const { name, message, websiteName, websiteUrl, honeypot } = await req.json();
+
+  // If honeypot is filled, silently ignore the request
+  if (honeypot) return new Response(JSON.stringify({ success: true }), { status: 200 });
+  
   const entries = await store.get("entries", { type: "json" }) || [];
   
   const newEntry = { 
