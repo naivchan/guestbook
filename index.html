@@ -81,12 +81,12 @@ async function loadEntries(page = 1) {
                 <div class="entry-header">
                     <div>
                         <span class="entry-author">${e.name}</span>
-                        <a href="#${entryId}" class="permalink" title="Permalink">#${e.id}</a>
                         ${e.websiteUrl ? `<span class="entry-website">@ <a href="${e.websiteUrl}" target="_blank">${e.websiteName || 'Link'}</a></span>` : ''}
                     </div>
                     <div class="entry-meta">
                         <span class="entry-date">${displayDate}</span>
                         <span class="entry-time">${displayTime}</span>
+                        <a href="#${entryId}" class="permalink" title="Permalink">#${e.id}</a>
                     </div>
                 </div>
                 <div class="entry-body">${e.message}</div>
