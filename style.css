@@ -47,9 +47,24 @@ form {
 }
 
 .form-row {
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
+    display: flex;
     gap: 10px;
+    flex-wrap: wrap; /* This is the key fix */
+}
+
+.form-row input {
+    flex: 1;
+    min-width: 200px; /* Forces a wrap if the screen is narrower than ~410px */
+}
+
+@media (max-width: 480px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row input {
+        width: 93%;
+    }
 }
 
 input, textarea {
