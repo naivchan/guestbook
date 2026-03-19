@@ -71,19 +71,28 @@
             const data = await res.json();
             
             // Render Entries
-            entriesDiv.innerHTML = data.entries.map(e => {
+            // Inside your data.entries.map(e => { ... })
                 const entryId = `entry-${e.id}`;
+                const dateObj = new Date(e.date);
+                const displayDate = dateObj.toLocaleDateString();
+                const displayTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
                 return `
                 <div class="entry" id="${entryId}">
                     <div class="entry-header">
                         <div>
                             <span class="entry-author">${e.name}</span>
-                            <a href="#${entryId}" class="permalink">#</a>
                             ${e.websiteUrl ? `<span class="entry-website">@ <a href="${e.websiteUrl}" target="_blank">${e.websiteName || 'Link'}</a></span>` : ''}
                         </div>
-                        <span class="entry-date">${new Date(e.date).toLocaleDateString()}</span>
+                        <div class="entry-meta">
+                            <span class="entry-date">${displayDate}</span>
+                            <span class="entry-time">${displayTime}</span>
+                        </div>
+                        <a href="#${entryId}" class="permalink" title="Permalink to this entry">#${e.id}</a>
                     </div>
                     <div class="entry-body">${e.message}</div>
+                    ...
+                `;
                     
                     ${e.adminReply ? `
                         <div class="admin-reply">
