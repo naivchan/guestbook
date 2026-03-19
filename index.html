@@ -7,12 +7,18 @@
         body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
         form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
         .entry { border-bottom: 1px solid #eee; padding: 10px 0; }
+        /* Hide the honeypot field from real users */
+        .hidden { display: none !important; visibility: hidden; }
     </style>
 </head>
 <body>
     <h1>Guestbook</h1>
     
     <form id="guestbook-form">
+        <div class="hidden">
+            <label>Don't fill this out if you're human: <input name="honeypot" id="honeypot"></label>
+        </div>
+
         <input type="text" id="name" placeholder="Your Name" required>
         <input type="text" id="websiteName" placeholder="Website Name (Optional)">
         <input type="url" id="websiteUrl" placeholder="https://yourlink.com (Optional)">
@@ -27,7 +33,7 @@
         const form = document.getElementById('guestbook-form');
         let isAdmin = false;
         let adminPassword = "";
-        
+
         // Toggle Admin Mode
         function enableAdmin() {
             const pass = prompt("Enter Admin Password:");
@@ -37,23 +43,39 @@
                 loadEntries(); // Refresh to show buttons
             }
         }
-        
+
+        // NEW: Delete Logic
+        async function deleteEntry(id) {
+            if (!confirm("Are you sure you want to delete this entry?")) return;
+
+            const res = await fetch('/.netlify/functions/delete-entry', {
+                method: 'POST',
+                body: JSON.stringify({ id, password: adminPassword })
+            });
+
+            if (res.ok) {
+                loadEntries();
+            } else {
+                alert("Delete failed. Check your password.");
+            }
+        }
+
         async function sendReply(id) {
             const reply = prompt("Enter your reply:");
             if (!reply) return;
-        
+
             const res = await fetch('/.netlify/functions/admin-reply', {
                 method: 'POST',
                 body: JSON.stringify({ id, reply, password: adminPassword })
             });
-        
+
             if (res.ok) {
                 loadEntries();
             } else {
                 alert("Admin check failed.");
             }
         }
-        
+
         async function loadEntries() {
             const res = await fetch('/.netlify/functions/get-entries');
             const entries = await res.json();
@@ -70,31 +92,48 @@
                             <strong>Reply:</strong> ${e.adminReply}
                         </div>
                     ` : ''}
-        
-                    ${isAdmin ? `<button onclick="sendReply(${e.id})">Reply as Admin</button>` : ''}
+
+                    ${isAdmin ? `
+                        <div style="margin-top: 10px;">
+                            <button onclick="sendReply(${e.id})">Reply</button>
+                            <button onclick="deleteEntry(${e.id})" style="color: red; margin-left: 10px;">Delete</button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
-        
-        // Existing form submit logic
+
         form.onsubmit = async (e) => {
             e.preventDefault();
+
+            // HONEYPOT CHECK: If the hidden field has a value, it's a bot.
+            if (document.getElementById('honeypot').value !== "") {
+                console.warn("Spam detected");
+                return; 
+            }
+
             const data = {
                 name: document.getElementById('name').value,
                 websiteName: document.getElementById('websiteName').value,
                 websiteUrl: document.getElementById('websiteUrl').value,
                 message: document.getElementById('message').value
             };
-            await fetch('/.netlify/functions/post-entry', { method: 'POST', body: JSON.stringify(data) });
+            
+            await fetch('/.netlify/functions/post-entry', { 
+                method: 'POST', 
+                body: JSON.stringify(data) 
+            });
+            
             form.reset();
             loadEntries();
         };
-        
+
         loadEntries();
     </script>
-<hr>
-<p style="text-align: center;">
-    <a href="#" onclick="enableAdmin(); return false;" style="color: #ccc; font-size: 0.8rem;">Admin Login</a>
-</p>
+
+    <hr>
+    <p style="text-align: center;">
+        <a href="#" onclick="enableAdmin(); return false;" style="color: #ccc; font-size: 0.8rem;">Admin Login</a>
+    </p>
 </body>
 </html>
