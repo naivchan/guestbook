@@ -25,41 +25,71 @@
     <script>
         const entriesDiv = document.getElementById('entries');
         const form = document.getElementById('guestbook-form');
-
-        // Fetch and display entries
-       async function loadEntries() {
+        let isAdmin = false;
+        let adminPassword = "";
+        
+        // Toggle Admin Mode
+        function enableAdmin() {
+            const pass = prompt("Enter Admin Password:");
+            if (pass) {
+                adminPassword = pass;
+                isAdmin = true;
+                loadEntries(); // Refresh to show buttons
+            }
+        }
+        
+        async function sendReply(id) {
+            const reply = prompt("Enter your reply:");
+            if (!reply) return;
+        
+            const res = await fetch('/.netlify/functions/admin-reply', {
+                method: 'POST',
+                body: JSON.stringify({ id, reply, password: adminPassword })
+            });
+        
+            if (res.ok) {
+                loadEntries();
+            } else {
+                alert("Admin check failed.");
+            }
+        }
+        
+        async function loadEntries() {
             const res = await fetch('/.netlify/functions/get-entries');
             const entries = await res.json();
+            
             entriesDiv.innerHTML = entries.map(e => `
-                <div class="entry">
+                <div class="entry" style="border-bottom: 1px solid #eee; padding: 10px 0;">
                     <strong>${e.name}</strong> 
-                    ${e.websiteUrl ? `<a href="${e.websiteUrl}">(${e.websiteName || 'Link'})</a>` : ''}
-                    <small>${new Date(e.date).toLocaleDateString()}</small><br>
+                    ${e.websiteUrl ? `<a href="${e.websiteUrl}" target="_blank">(${e.websiteName || 'Web'})</a>` : ''}
+                    <small style="color: #888;">${new Date(e.date).toLocaleDateString()}</small>
                     <p>${e.message}</p>
-                    ${e.adminReply ? `<div style="margin-left: 20px; color: #555; border-left: 2px solid #ccc; padding-left: 10px;">
-                        <strong>Reply:</strong> ${e.adminReply}
-                    </div>` : ''}
+                    
+                    ${e.adminReply ? `
+                        <div style="margin: 10px 0 10px 20px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00adff;">
+                            <strong>Reply:</strong> ${e.adminReply}
+                        </div>
+                    ` : ''}
+        
+                    ${isAdmin ? `<button onclick="sendReply(${e.id})">Reply as Admin</button>` : ''}
                 </div>
             `).join('');
         }
-
-        // Handle form submission
+        
+        // Existing form submit logic
         form.onsubmit = async (e) => {
             e.preventDefault();
             const data = {
                 name: document.getElementById('name').value,
+                websiteName: document.getElementById('websiteName').value,
+                websiteUrl: document.getElementById('websiteUrl').value,
                 message: document.getElementById('message').value
             };
-
-            await fetch('/.netlify/functions/post-entry', {
-                method: 'POST',
-                body: JSON.stringify(data)
-            });
-
+            await fetch('/.netlify/functions/post-entry', { method: 'POST', body: JSON.stringify(data) });
             form.reset();
             loadEntries();
         };
-
+        
         loadEntries();
     </script>
 </body>
