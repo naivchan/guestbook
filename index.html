@@ -72,6 +72,7 @@ async function loadEntries(page = 1) {
         
         entriesDiv.innerHTML = data.entries.map(e => {
             const entryId = `entry-${e.id}`;
+            const shortId = Number(e.id).toString(36).toUpperCase(); // e.g. "1JZ9K2LW"
             const dateObj = new Date(e.date);
             const displayDate = dateObj.toLocaleDateString();
             const displayTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -86,7 +87,7 @@ async function loadEntries(page = 1) {
                     <div class="entry-meta">
                         <span class="entry-date">${displayDate}</span>
                         <span class="entry-time">${displayTime}</span>
-                        <a href="#${entryId}" class="permalink" title="Permalink">#${e.id}</a>
+                        <a href="#${entryId}" class="permalink" title="Permalink">#${shortId}</a>
                     </div>
                 </div>
                 <div class="entry-body">${e.message}</div>
