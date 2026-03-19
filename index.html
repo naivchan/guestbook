@@ -27,15 +27,20 @@
         const form = document.getElementById('guestbook-form');
 
         // Fetch and display entries
-        async function loadEntries() {
+       async function loadEntries() {
             const res = await fetch('/.netlify/functions/get-entries');
             const entries = await res.json();
-            entriesDiv.innerHTML = entries.length ? entries.map(e => `
+            entriesDiv.innerHTML = entries.map(e => `
                 <div class="entry">
-                    <strong>${e.name}</strong> (${new Date(e.date).toLocaleDateString()})<br>
-                    ${e.message}
+                    <strong>${e.name}</strong> 
+                    ${e.websiteUrl ? `<a href="${e.websiteUrl}">(${e.websiteName || 'Link'})</a>` : ''}
+                    <small>${new Date(e.date).toLocaleDateString()}</small><br>
+                    <p>${e.message}</p>
+                    ${e.adminReply ? `<div style="margin-left: 20px; color: #555; border-left: 2px solid #ccc; padding-left: 10px;">
+                        <strong>Reply:</strong> ${e.adminReply}
+                    </div>` : ''}
                 </div>
-            `).join('') : 'No entries yet. Be the first!';
+            `).join('');
         }
 
         // Handle form submission
