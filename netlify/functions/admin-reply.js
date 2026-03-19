@@ -2,10 +2,10 @@ import { getStore } from "@netlify/blobs";
 
 export default async (req) => {
   const store = getStore("guestbook", { consistency: "strong" });
-  
-  // Security check: You can add a simple password check here
   const { id, reply, password } = await req.json();
-  if (password !== "YOUR_SECRET_PASSWORD") {
+
+  // Check if the password matches the one you set in Netlify
+  if (password !== process.env.ADMIN_PASSWORD) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -18,5 +18,5 @@ export default async (req) => {
   });
 
   await store.setJSON("entries", updated);
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  return new Response(JSON.stringify({ success: true }));
 };
