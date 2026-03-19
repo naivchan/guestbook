@@ -26,19 +26,22 @@
 
     <div id="entries">Loading...</div>
 
+    <div id="pagination" class="pagination-container"></div>
+
     <script>
-        /* Keep all the JavaScript we wrote previously here */
         const entriesDiv = document.getElementById('entries');
+        const paginationDiv = document.getElementById('pagination');
         const form = document.getElementById('guestbook-form');
         let isAdmin = false;
         let adminPassword = "";
+        let currentPage = 1;
 
         function enableAdmin() {
             const pass = prompt("Admin Password:");
             if (pass) {
                 adminPassword = pass;
                 isAdmin = true;
-                loadEntries();
+                loadEntries(currentPage);
             }
         }
 
@@ -48,7 +51,7 @@
                 method: 'POST',
                 body: JSON.stringify({ id, password: adminPassword })
             });
-            loadEntries();
+            loadEntries(currentPage);
         }
 
         async function sendReply(id) {
@@ -58,18 +61,24 @@
                 method: 'POST',
                 body: JSON.stringify({ id, reply, password: adminPassword })
             });
-            loadEntries();
+            loadEntries(currentPage);
         }
 
-        async function loadEntries() {
-            const res = await fetch('/.netlify/functions/get-entries');
-            const entries = await res.json();
+        // 2. Updated loadEntries to handle pagination and permalinks
+        async function loadEntries(page = 1) {
+            currentPage = page;
+            const res = await fetch(`/.netlify/functions/get-entries?page=${page}`);
+            const data = await res.json();
             
-            entriesDiv.innerHTML = entries.map(e => `
-                <div class="entry">
+            // Render Entries
+            entriesDiv.innerHTML = data.entries.map(e => {
+                const entryId = `entry-${e.id}`;
+                return `
+                <div class="entry" id="${entryId}">
                     <div class="entry-header">
                         <div>
                             <span class="entry-author">${e.name}</span>
+                            <a href="#${entryId}" class="permalink">#</a>
                             ${e.websiteUrl ? `<span class="entry-website">@ <a href="${e.websiteUrl}" target="_blank">${e.websiteName || 'Link'}</a></span>` : ''}
                         </div>
                         <span class="entry-date">${new Date(e.date).toLocaleDateString()}</span>
@@ -89,7 +98,41 @@
                         </div>
                     ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
+
+            renderPagination(data.totalPages, data.currentPage);
+            handleHighlight();
+        }
+
+        // 3. New Helper: Render the numbered buttons
+        function renderPagination(total, current) {
+            paginationDiv.innerHTML = '';
+            if (total <= 1) return;
+
+            for (let i = 1; i <= total; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = `page-link ${i === current ? 'active' : ''}`;
+                btn.onclick = () => {
+                    loadEntries(i);
+                    window.scrollTo({ top: form.offsetTop, behavior: 'smooth' });
+                };
+                paginationDiv.appendChild(btn);
+            }
+        }
+
+        // 4. New Helper: Highlight a permalinked entry
+        function handleHighlight() {
+            const hash = window.location.hash;
+            if (hash) {
+                const target = document.querySelector(hash);
+                if (target) {
+                    // Remove highlight from others
+                    document.querySelectorAll('.entry').forEach(el => el.classList.remove('highlight-entry'));
+                    // Add to target
+                    target.classList.add('highlight-entry');
+                }
+            }
         }
 
         form.onsubmit = async (e) => {
@@ -98,6 +141,7 @@
 
             const data = {
                 id: Date.now(),
+                date: new Date().toISOString(),
                 name: document.getElementById('name').value,
                 websiteName: document.getElementById('websiteName').value,
                 websiteUrl: document.getElementById('websiteUrl').value,
@@ -106,10 +150,12 @@
             
             await fetch('/.netlify/functions/post-entry', { method: 'POST', body: JSON.stringify(data) });
             form.reset();
-            loadEntries();
+            loadEntries(1); // Refresh to first page to see the new post
         };
 
+        // Initialize
         loadEntries();
+        window.addEventListener('hashchange', handleHighlight);
     </script>
 
     <footer>
