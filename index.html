@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guestbook — pomnavi</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="alternate" type="application/rss+xml" title="Guestbook Feed" href="/.netlify/functions/rss" />
 </head>
 <body>
 
-    <h1>Guestbook</h1>
+    <h1>Navi's Guestbook</h1>
     
     <form id="guestbook-form">
         <div class="hidden">
@@ -20,7 +21,7 @@
             <input type="text" id="websiteName" placeholder="Website Name (optional)">
             <input type="url" id="websiteUrl" placeholder="https://yoursite.com (optional)">
         </div>
-        <textarea id="message" placeholder="Write something..." rows="4" required></textarea>
+        <textarea id="message" placeholder="Write something...plaintext only :)" rows="4" required></textarea>
         <button type="submit">Post Message</button>
     </form>
 
