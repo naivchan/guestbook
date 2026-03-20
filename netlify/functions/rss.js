@@ -13,7 +13,7 @@ export default async (req, context) => {
   const itemsXml = feedEntries.map(e => `
     <item>
       <title>New message from ${e.name}</title>
-      <link>https://pomnavi.net/guestbook#entry-${e.id}</link>
+      <link>https://gb.pomnavi.net/#entry-${e.id}</link>
       <description><![CDATA[${e.message}]]></description>
       <pubDate>${new Date(e.date).toUTCString()}</pubDate>
       <guid isPermaLink="false">guestbook-${e.id}</guid>
@@ -23,7 +23,7 @@ export default async (req, context) => {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
   <title>pomnavi Guestbook</title>
-  <link>https://pomnavi.net/guestbook</link>
+  <link>https://gb.pomnavi.net/</link>
   <description>Latest entries from the pomnavi.net guestbook</description>
   <language>en-us</language>
   <atom:link href="https://pomnavi.net/.netlify/functions/rss" rel="self" type="application/rss+xml" />
